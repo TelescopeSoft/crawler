@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qlmsoft.crawler.mapper.CorpMapper" >
+    <resultMap id="BaseResultMap" type="com.qlmsoft.crawler.entity.CorpEntity" >
+        <id column="qyID" property="qyID" jdbcType="VARCHAR" />
+        <result column="qymc" property="qymc" jdbcType="VARCHAR" />
+        <result column="zzjgdm" property="zzjgdm" jdbcType="VARCHAR" />
+        <result column="yyzzzch" property="yyzzzch" jdbcType="VARCHAR" />
+        <result column="tyshxydm" property="tyshxydm" jdbcType="VARCHAR" />
+        <result column="xgr" property="xgr" jdbcType="VARCHAR" />
+        <result column="tag" property="tag" jdbcType="VARCHAR" />  
+        <result column="DataState" property="dataState" jdbcType="INTEGER" /> 
+    </resultMap>
+    
+    <sql id="columns" >
+        j.qyID, j.qymc,j.zzjgdm,j.yyzzzch,j.tyshxydm,j.xgr,j.tag,j.DataState
+    </sql>
+
+    <select id="getCorpWithoutUnifiedSocialCreditCode" resultMap="BaseResultMap"  >
+       SELECT DISTINCT <include refid="columns" />
+	   FROM UEPP_Qyjbxx j
+	   WHERE (j.xgr is null or j.xgr != 'crawler') AND (j.tyshxydm IS NULL OR　LEN(j.tyshxydm) != 18)
+    </select>
+    
+    <select id="getSurveyAndDesign" resultMap="BaseResultMap"  >
+       SELECT DISTINCT qy.qyID,qy.qymc, qy.zzjgdm,qy.yyzzzch,qy.tyshxydm,qy.xgr,qy.tag,qy.DataState
+       FROM UEPP_Qyjbxx qy
+       INNER JOIN UEPP_Qycsyw yw ON qy.qyID = yw.qyID
+       WHERE yw.csywlxID IN (5,2,6) AND len(tyshxydm) = 18
+       AND  qy.qyID not in (select corp_id from Corp_Cert)
+    </select>
+ 
+    <update id="updateUnifiedSocialCreditCode" parameterType="com.qlmsoft.crawler.entity.CorpEntity" >
+       UPDATE  UEPP_Qyjbxx  SET tyshxydm = #{tyshxydm},xgr=#{xgr} WHERE  qyID = #{qyID}
+    </update>
+    
+    <update id="updateNoCredCode" parameterType="com.qlmsoft.crawler.entity.CorpEntity" >
+       UPDATE  UEPP_Qyjbxx  SET xgr=#{xgr} WHERE  qyID = #{qyID}
+    </update>
+
+</mapper>
