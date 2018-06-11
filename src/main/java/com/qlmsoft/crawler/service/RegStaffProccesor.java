@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Consts;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
@@ -44,6 +45,8 @@ public class RegStaffProccesor {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	public static final String CORP_REG_STAFF_LIST_URL = "http://jzsc.mohurd.gov.cn/dataservice/query/comp/regStaffList/";
+
+	public static final String CORP_REG_STAFF_LIST_PAGE_URL = "/dataservice/query/comp/regStaffList/";
 
 	public CloseableHttpClient closeHttpClient = HttpClients.createDefault();
 
@@ -83,9 +86,13 @@ public class RegStaffProccesor {
 
 					for (RegStaffVO sta : result.getStaffs()) {
 
+						//第一个版本不显示证书详细内容，具体是证书编号跟有效期
+//						detailProc.regStaffDetailReq(sta);
+						logger.info("=====" + sta.toString());
+						
 						staffEx.clear();
-						staffEx.createCriteria().andNameEqualTo(sta.getName())
-								.andIdCard2EqualTo(sta.getIdCard());
+						staffEx.createCriteria().andCorpIdEqualTo(sta.getCorpID()).andNameEqualTo(sta.getName())
+								.andIdCard2EqualTo(sta.getIdCard2());
 
 						existRegStaff = regStaffMapper.selectByExample(staffEx);
 
@@ -101,39 +108,95 @@ public class RegStaffProccesor {
 							record.setName(sta.getName());
 							record.setStatus(0);
 							record.setUpdateTime(record.getUpdateTime());
-
+							record.setRegType(sta.getRegType());
+							record.setRegMajor(sta.getRegMajor());
+							record.setRegNo(sta.getRegNo());
+							
+							String idCard = regStaffMapper.selectIdCardByNameAndIdcard(sta);
+							if(!StringUtils.isEmpty(idCard)){
+								record.setIdCard(idCard);
+							}
+							 
 							regStaffMapper.insert(record);
-							//logger.info("id : " + record.getId());
+							// logger.info("id : " + record.getId());
 							staffId = record.getId();
 
 						} else {
-							staffId = existRegStaff.get(0).getId();
+							CorpRegStaff record = existRegStaff.get(0);
+							record.setCorpId(sta.getCorpID());
+							
+							record.setGender("男".equals(sta.getGender()) ? 0
+									: 1);
+							record.setIdCard2(sta.getIdCard2());
+							record.setIdType(sta.getIdType());
+							record.setName(sta.getName());
+							record.setStatus(0);
+							record.setUpdateTime(record.getUpdateTime());
+							record.setRegType(sta.getRegType());
+							record.setRegMajor(sta.getRegMajor());
+							record.setRegNo(sta.getRegNo());
+							 
+							String idCard = regStaffMapper.selectIdCardByNameAndIdcard(sta);
+							if(!StringUtils.isEmpty(idCard)){
+								record.setIdCard(idCard);
+							}
+							
+							regStaffMapper.updateByPrimaryKey(record); 
+							
+							
 						}
 
-						staffCertEx.clear();
-						staffCertEx.createCriteria()
-								.andRegTypeEqualTo(sta.getRegType())
-								.andRegMajorEqualTo(sta.getRegMajor())
-								.andCertNoEqualTo(sta.getCertNo())
-								.andValidDateEqualTo(sta.getValid());
+						/** 初期版本不获取注册人员证书详情
+						for (CorpRegStaffCert staffCert : sta.getCerts()) {
+							staffCertEx.clear();
 
-						existCert = regStaffCertMapper
-								.selectByExample(staffCertEx);
-						if (existCert == null || existCert.isEmpty()) {
-							CorpRegStaffCert cert = new CorpRegStaffCert();
-							cert.setCertNo(sta.getCertNo());
-							cert.setCreateTime(new Date());
-							cert.setUpdateTime(cert.getCreateTime());
-							cert.setRegMajor(sta.getRegMajor());
-							cert.setRegNo(sta.getRegNo());
-							cert.setRegType(sta.getRegType());
-							cert.setStaffId(staffId);
-							cert.setStatus(0);
-							cert.setValidDate(sta.getValid());
-							cert.setStaffIdCard2(sta.getIdCard2());
+							if (!StringUtils.isEmpty(staffCert.getRegMajor())) {
+								staffCertEx
+										.createCriteria()
+										.andRegTypeEqualTo(
+												staffCert.getRegType())
+										.andCertNoEqualTo(staffCert.getCertNo())
+										.andRegMajorEqualTo(
+												staffCert.getRegMajor())
+										.andValidDateEqualTo(
+												staffCert.getValidDate());
+							} else {
+								staffCertEx
+										.createCriteria()
+										.andRegTypeEqualTo(
+												staffCert.getRegType())
+										.andCertNoEqualTo(staffCert.getCertNo())
+										.andValidDateEqualTo(
+												staffCert.getValidDate());
+							}
 
-							regStaffCertMapper.insert(cert);
+							existCert = regStaffCertMapper
+									.selectByExample(staffCertEx);
+							if (existCert == null || existCert.isEmpty()) {
+								CorpRegStaffCert cert = new CorpRegStaffCert();
+								cert.setCertNo(staffCert.getCertNo());
+								cert.setCreateTime(new Date());
+								cert.setUpdateTime(cert.getCreateTime());
+								cert.setRegMajor(staffCert.getRegMajor());
+								cert.setRegNo(staffCert.getRegNo());
+								cert.setRegType(staffCert.getRegType());
+								cert.setStaffId(staffId);
+								cert.setStatus(0);
+								cert.setValidDate(staffCert.getValidDate());
+								cert.setStaffIdCard2(sta.getIdCard2());
+
+								regStaffCertMapper.insert(cert);
+							}
 						}
+						
+						//每个人员详情休眠5秒
+						try {
+							Thread.sleep(5000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						*/
 
 					}
 
@@ -162,8 +225,8 @@ public class RegStaffProccesor {
 
 	}
 
-	public List<RegStaffVO> regStaffListReqByPage(String corpId, String corpPageID, int page,
-			int total, int pageSize) {
+	public List<RegStaffVO> regStaffListReqByPage(String corpId,
+			String corpPageID, int page, int total, int pageSize) {
 
 		List<RegStaffVO> staffList = null;
 
@@ -172,10 +235,14 @@ public class RegStaffProccesor {
 
 		// 设置Post参数
 		List<NameValuePair> params = new ArrayList<NameValuePair>();
+		params.add(new BasicNameValuePair("data-url",
+				CORP_REG_STAFF_LIST_PAGE_URL + corpPageID));
 		params.add(new BasicNameValuePair("$total", String.valueOf(total)));
 		params.add(new BasicNameValuePair("$reload", "0"));
 		params.add(new BasicNameValuePair("$pg", String.valueOf(page)));
 		params.add(new BasicNameValuePair("$pgsz", String.valueOf(pageSize)));
+		params.add(new BasicNameValuePair("class", "formsubmit"));
+		params.add(new BasicNameValuePair("href", "javascript:void(0)"));
 		httpPost.setEntity(new UrlEncodedFormEntity(params, Consts.UTF_8));
 
 		try {
@@ -247,9 +314,9 @@ public class RegStaffProccesor {
 				// 抓取分页数据
 				for (int i = 2; i <= result.getTotalPage(); i++) {
 
-					List<RegStaffVO> staffInPage = regStaffListReqByPage(corp.getZzjgdm(), 
-							corp.getCorpPageID(), i, result.getTotal(),
-							result.getPageSize());
+					List<RegStaffVO> staffInPage = regStaffListReqByPage(
+							corp.getZzjgdm(), corp.getCorpPageID(), i,
+							result.getTotal(), result.getPageSize());
 					if (staffInPage != null && !staffInPage.isEmpty()) {
 						staffs.addAll(staffInPage);
 					}
@@ -268,17 +335,18 @@ public class RegStaffProccesor {
 		if (result.getStaffs().isEmpty()) {
 			logger.info(corp.getCorpID() + " has no reg staff");
 		} else {
-			logger.info(corp.getCorpID() + " staffs:");
-			for (RegStaffVO vo : result.getStaffs()) {
-				logger.info(vo.toString());
-			}
+			logger.info(corp.getCorpID() + " staffs:" + result.getStaffs().size());
+//			for (RegStaffVO vo : result.getStaffs()) {
+//				logger.info(vo.toString());
+//			}
 		}
 
 		return result;
 
 	}
 
-	private List<RegStaffVO> regStaffListResultForSinglePage(String corpId, String html) {
+	private List<RegStaffVO> regStaffListResultForSinglePage(String corpId,
+			String html) {
 
 		List<RegStaffVO> staffs = null;
 		Document doc = Jsoup.parse(html);
@@ -295,6 +363,7 @@ public class RegStaffProccesor {
 	}
 
 	private List<RegStaffVO> resolveRegStaff(String corpId, Elements trs) {
+		logger.info("resolveRegStaff :" + corpId);
 		List<RegStaffVO> staffs = new ArrayList<RegStaffVO>();
 		for (Element tr : trs) {
 			RegStaffVO staff = new RegStaffVO();
@@ -303,6 +372,7 @@ public class RegStaffProccesor {
 			Elements tds = tr.getElementsByTag("td");
 			String staffDetailUrlStr = null;
 			String staffDetailUrl = null;
+
 			if (tds.size() == 6) {
 				staff.setName(tds.get(1).getElementsByTag("a").first().html());
 
@@ -313,18 +383,25 @@ public class RegStaffProccesor {
 						staffDetailUrlStr.indexOf('/'),
 						staffDetailUrlStr.lastIndexOf("'"));
 
-				staff.setIdCard(tds.get(2).html());
+				staff.setIdCard2(tds.get(2).html());
 				staff.setRegType(tds.get(3).html());
 				staff.setRegNo(tds.get(4).html());
 				staff.setRegMajor(tds.get(5).html());
+				staff.setStaffDetailUrl(staffDetailUrl);
 
-				detailProc.regStaffDetailReq(staffDetailUrl, staff);
+//				logger.info("regStaffDetailReq :" + staff.getName() + " - "
+//						+ staffDetailUrl);
+
+				// 先分页获取完所有人员数据之后，统一便利人员详情
+				// detailProc.regStaffDetailReq(staffDetailUrl, staff);
 
 				staffs.add(staff);
-
+ 
 			}
 
 		}
+
+		logger.info("resolveRegStaff size :" + staffs.size());
 		return staffs;
 	}
 

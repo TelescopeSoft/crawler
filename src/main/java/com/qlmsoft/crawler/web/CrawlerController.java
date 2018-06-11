@@ -44,7 +44,7 @@ public class CrawlerController {
 		if ("huangzhengyu".equals(user) && "GHadmin1234".equals(password)) {
 			logger.info("begin to crawl qyzs for :" + corpName);
 //			service.start(corpName);
-			mohurdCorpService.start(corpName);;
+			mohurdCorpService.start(false, corpName);;
 			return "OK";
 		} else {
 			return "Fail";
@@ -53,14 +53,16 @@ public class CrawlerController {
 	}
 	
 	@RequestMapping("/crawler/qyzs/kanchasheji")
-	public String qyzsKanchasheji(String user, String password,String corpName) {
+	public String qyzsKanchasheji(String user, String password,String corpName,String staff) {
 //		if ("huangzhengyu".equals(user) && "GHadmin1234".equals(password)) {
 			logger.info("begin to crawl");
 //			service.start(corpName);
+			
+			boolean withStaffFlag = !StringUtils.isEmpty(staff);
 			if(StringUtils.isEmpty(corpName)){
-				mohurdCorpService.start();
+				mohurdCorpService.start(withStaffFlag);
 			}else {
-				mohurdCorpService.start(corpName);
+				mohurdCorpService.start(withStaffFlag,corpName);
 			}
 			
 			return "OK";

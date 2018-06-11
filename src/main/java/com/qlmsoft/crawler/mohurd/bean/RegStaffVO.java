@@ -1,6 +1,10 @@
 package com.qlmsoft.crawler.mohurd.bean;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
+import com.qlmsoft.crawler.entity.CorpRegStaffCert;
 
 public class RegStaffVO implements java.io.Serializable {
 
@@ -36,6 +40,11 @@ public class RegStaffVO implements java.io.Serializable {
 	private String validDate;
 
 	private Date valid;
+
+	// 存取人员详情URL
+	private String staffDetailUrl;
+
+	private List<CorpRegStaffCert> certs = new ArrayList<CorpRegStaffCert>();
 
 	public String getCorpID() {
 		return corpID;
@@ -133,13 +142,31 @@ public class RegStaffVO implements java.io.Serializable {
 		this.valid = valid;
 	}
 
+	public List<CorpRegStaffCert> getCerts() {
+		return certs;
+	}
+
+	public void setCerts(List<CorpRegStaffCert> certs) {
+		this.certs = certs;
+	}
+
+	public String getStaffDetailUrl() {
+		return staffDetailUrl;
+	}
+
+	public void setStaffDetailUrl(String staffDetailUrl) {
+		this.staffDetailUrl = staffDetailUrl;
+	}
+
 	@Override
 	public String toString() {
 		return "RegStaffVO [corpID=" + corpID + ", gender=" + gender
 				+ ", name=" + name + ", idType=" + idType + ", idCard="
 				+ idCard + ", idCard2=" + idCard2 + ", regType=" + regType
 				+ ", regNo=" + regNo + ", regMajor=" + regMajor + ", certNo="
-				+ certNo + ", validDate=" + validDate + "]";
+				+ certNo + ", validDate=" + validDate + ", valid=" + valid
+				+ ", staffDetailUrl=" + staffDetailUrl + ", certs=" + certs
+				+ "]";
 	}
 
 }

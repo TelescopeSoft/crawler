@@ -4,105 +4,154 @@ import java.io.Serializable;
 import java.util.Date;
 
 public class CorpRegStaff implements Serializable {
-    private Integer id;
+	private Integer id;
 
-    private String corpId;
+	private String corpId;
 
-    private String name;
+	private String name;
 
-    private Integer gender;
+	private Integer gender;
 
-    private String idType;
+	private String idType;
 
-    private String idCard;
+	private String idCard;
 
-    private Date createTime;
+	private Date createTime;
 
-    private Date updateTime;
+	private Date updateTime;
 
-    private Integer status;
+	private Integer status;
 
-    private String idCard2;
+	private String idCard2;
 
-    private static final long serialVersionUID = 1L;
+	private String regType;
+	private Integer regTypeId;
 
-    public Integer getId() {
-        return id;
-    }
+	private String regMajor;
+	private Integer regMajorId;
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+	private String regNo;
 
-    public String getCorpId() {
-        return corpId;
-    }
+	private static final long serialVersionUID = 1L;
 
-    public void setCorpId(String corpId) {
-        this.corpId = corpId == null ? null : corpId.trim();
-    }
+	public Integer getId() {
+		return id;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public void setId(Integer id) {
+		this.id = id;
+	}
 
-    public void setName(String name) {
-        this.name = name == null ? null : name.trim();
-    }
+	public String getCorpId() {
+		return corpId;
+	}
 
-    public Integer getGender() {
-        return gender;
-    }
+	public void setCorpId(String corpId) {
+		this.corpId = corpId == null ? null : corpId.trim();
+	}
 
-    public void setGender(Integer gender) {
-        this.gender = gender;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public String getIdType() {
-        return idType;
-    }
+	public void setName(String name) {
+		this.name = name == null ? null : name.trim();
+	}
 
-    public void setIdType(String idType) {
-        this.idType = idType == null ? null : idType.trim();
-    }
+	public Integer getGender() {
+		return gender;
+	}
 
-    public String getIdCard() {
-        return idCard;
-    }
+	public void setGender(Integer gender) {
+		this.gender = gender;
+	}
 
-    public void setIdCard(String idCard) {
-        this.idCard = idCard == null ? null : idCard.trim();
-    }
+	public String getIdType() {
+		return idType;
+	}
 
-    public Date getCreateTime() {
-        return createTime;
-    }
+	public void setIdType(String idType) {
+		this.idType = idType == null ? null : idType.trim();
+	}
 
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
+	public String getIdCard() {
+		return idCard;
+	}
 
-    public Date getUpdateTime() {
-        return updateTime;
-    }
+	public void setIdCard(String idCard) {
+		this.idCard = idCard == null ? null : idCard.trim();
+	}
 
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-    }
+	public Date getCreateTime() {
+		return createTime;
+	}
 
-    public Integer getStatus() {
-        return status;
-    }
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
 
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
+	public Date getUpdateTime() {
+		return updateTime;
+	}
 
-    public String getIdCard2() {
-        return idCard2;
-    }
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
 
-    public void setIdCard2(String idCard2) {
-        this.idCard2 = idCard2 == null ? null : idCard2.trim();
-    }
+	public Integer getStatus() {
+		return status;
+	}
+
+	public void setStatus(Integer status) {
+		this.status = status;
+	}
+
+	public String getIdCard2() {
+		return idCard2;
+	}
+
+	public void setIdCard2(String idCard2) {
+		this.idCard2 = idCard2 == null ? null : idCard2.trim();
+	}
+
+	public String getRegType() {
+		return regType;
+	}
+
+	public void setRegType(String regType) {
+		this.regType = regType;
+	}
+
+	public Integer getRegTypeId() {
+		return regTypeId;
+	}
+
+	public void setRegTypeId(Integer regTypeId) {
+		this.regTypeId = regTypeId;
+	}
+
+	public String getRegMajor() {
+		return regMajor;
+	}
+
+	public void setRegMajor(String regMajor) {
+		this.regMajor = regMajor;
+	}
+
+	public Integer getRegMajorId() {
+		return regMajorId;
+	}
+
+	public void setRegMajorId(Integer regMajorId) {
+		this.regMajorId = regMajorId;
+	}
+
+	public String getRegNo() {
+		return regNo;
+	}
+
+	public void setRegNo(String regNo) {
+		this.regNo = regNo;
+	}
+
 }

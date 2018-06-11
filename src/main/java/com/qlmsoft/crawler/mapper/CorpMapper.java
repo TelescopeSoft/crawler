@@ -16,5 +16,8 @@ public interface CorpMapper {
 	
 	//勘察设计企业
 	List<CorpEntity> getSurveyAndDesign();
+	
+	//勘察企业
+	List<CorpEntity> getSurveyAndDesignStaff();
 
 }

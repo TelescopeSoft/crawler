@@ -50,6 +50,7 @@ import com.qlmsoft.crawler.mapper.UeppCodeMapper;
 import com.qlmsoft.crawler.mohurd.bean.BaseCorpVO;
 import com.qlmsoft.crawler.mohurd.bean.CorpCaVO;
 import com.qlmsoft.crawler.mohurd.bean.CorpDetailVO;
+import com.qlmsoft.crawler.mohurd.bean.RegStaffs;
 
 @Service
 public class MohurdCorpCrawler {
@@ -106,11 +107,12 @@ public class MohurdCorpCrawler {
 	/**
 	 * 爬取企业信息程序
 	 */
-	public void start() {
+	public void start(boolean withStaffFlag) {
 		
 		corpCertList = corpCertMappingMapper.selectAll(null);
 		
-		List<CorpEntity> corps = corpMapper.getSurveyAndDesign();
+//		List<CorpEntity> corps = corpMapper.getSurveyAndDesign();
+		List<CorpEntity> corps = corpMapper.getSurveyAndDesignStaff();
 		
 		logger.info("计划获取企业数:" + corps.size());
 		long startTime = System.currentTimeMillis();
@@ -121,9 +123,10 @@ public class MohurdCorpCrawler {
 			logger.info("开始获取企业:" + corp.getQymc());
 
 			try {
-				start(corp.getQymc());
-				// 防止被防火墙阻挡，30秒获取一次
+				start(withStaffFlag,corp.getQymc());
+				// 防止被防火墙阻挡，90秒获取一次
 				Thread.sleep(30000);
+//				Thread.sleep(60000);
 			} catch (Exception e) {
 				e.printStackTrace();
 				logger.error("error : " + e.getMessage());
@@ -138,7 +141,7 @@ public class MohurdCorpCrawler {
 	/**
 	 * 爬取企业信息程序
 	 */
-	public void start(String corpName) {
+	public void start(boolean withStaffFlag, String corpName) {
 		if(corpCertList == null){
 			corpCertList = corpCertMappingMapper.selectAll(null);
 		}
@@ -224,7 +227,7 @@ public class MohurdCorpCrawler {
 							certMapper.insert(savedCert);
 							logger.info("新增企业证书:" + savedCert.toString());
 						} else {
-							transferToCert(zzjgdm, ca, toSaveCert);
+							transferToCert(zzjgdm, ca, toSaveCert); 
 							certMapper.updateByPrimaryKeySelective(toSaveCert);
 							logger.info("更新企业证书:" + toSaveCert.toString());
 						}
@@ -278,7 +281,10 @@ public class MohurdCorpCrawler {
 				}
 				 
 				// 企业注册人员
-				//RegStaffs staffs = startProc.regStaffListReq(corpVO);
+				if(withStaffFlag){
+					RegStaffs staffs = startProc.regStaffListReq(corpVO);
+				}
+				
 			}
 		}
 
@@ -337,7 +343,9 @@ public class MohurdCorpCrawler {
 			e.printStackTrace();
 		}
 		savedCert.setIssueAuthority(ca.getFzdw());
-		savedCert.setCreateTime(Calendar.getInstance().getTime());
+		if(savedCert.getCreateTime() == null){
+			savedCert.setCreateTime(Calendar.getInstance().getTime());
+		}
 		savedCert.setUpdateTime(Calendar.getInstance().getTime());
 		savedCert.setTag(XGR);
 		

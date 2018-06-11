@@ -12,6 +12,11 @@
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="status" jdbcType="INTEGER" property="status" />
     <result column="id_card2" jdbcType="VARCHAR" property="idCard2" />
+    <result column="reg_type" jdbcType="VARCHAR" property="regType" />
+    <result column="reg_type_id" jdbcType="INTEGER" property="regTypeId" />
+    <result column="reg_major" jdbcType="VARCHAR" property="regMajor" />
+    <result column="reg_major_id" jdbcType="INTEGER" property="regMajorId" />
+    <result column="reg_no" jdbcType="VARCHAR" property="regNo" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -94,6 +99,14 @@
     from CorpRegStaff
     where id = #{id,jdbcType=INTEGER}
   </select>
+
+	<select id="selectIdCardByNameAndIdcard" parameterType="com.qlmsoft.crawler.entity.CorpRegStaff"
+		resultType="java.lang.String">
+		SELECT TOP 1 r.ryID FROM UEPP_Ryjbxx r
+		where xm = #{name,jdbcType=VARCHAR} and
+		STUFF(r.ryID,len(r.ryID)-7,6,'******')= #{idCard2,jdbcType=VARCHAR}
+	</select>
+	
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from CorpRegStaff
     where id = #{id,jdbcType=INTEGER}
@@ -107,11 +120,14 @@
   <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.qlmsoft.crawler.entity.CorpRegStaff" useGeneratedKeys="true">
     insert into CorpRegStaff (corp_id, name, gender, 
       id_type, id_card, create_time, 
-      update_time, status, id_card2
+      update_time, status, id_card2,
+      reg_type,reg_type_id,reg_major,reg_major_id,reg_no
       )
     values (#{corpId,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{gender,jdbcType=INTEGER}, 
       #{idType,jdbcType=VARCHAR}, #{idCard,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
-      #{updateTime,jdbcType=TIMESTAMP}, #{status,jdbcType=INTEGER}, #{idCard2,jdbcType=VARCHAR}
+      #{updateTime,jdbcType=TIMESTAMP}, #{status,jdbcType=INTEGER}, #{idCard2,jdbcType=VARCHAR},
+      #{regType,jdbcType=VARCHAR},#{regTypeId,jdbcType=INTEGER},#{regMajor,jdbcType=VARCHAR},#{regMajorId,jdbcType=INTEGER},
+      #{regNo,jdbcType=VARCHAR}
       )
   </insert>
   <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.qlmsoft.crawler.entity.CorpRegStaff" useGeneratedKeys="true">
@@ -214,6 +230,21 @@
       <if test="record.idCard2 != null">
         id_card2 = #{record.idCard2,jdbcType=VARCHAR},
       </if>
+      <if test="record.regType != null">
+        reg_type = #{record.regType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.regTypeId != null">
+        reg_type_id = #{record.regTypeId,jdbcType=INTEGER},
+      </if>
+      <if test="record.regMajor != null">
+        reg_major = #{record.regMajor,jdbcType=VARCHAR},
+      </if>
+      <if test="record.regMajorId != null">
+        reg_major_id = #{record.regMajorId,jdbcType=INTEGER},
+      </if>
+      <if test="record.regNo != null">
+        reg_no = #{record.regNo,jdbcType=VARCHAR},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -265,6 +296,21 @@
       <if test="idCard2 != null">
         id_card2 = #{idCard2,jdbcType=VARCHAR},
       </if>
+      <if test="regType != null">
+        reg_type = #{regType,jdbcType=VARCHAR},
+      </if>
+      <if test="regTypeId != null">
+        reg_type_id = #{regTypeId,jdbcType=INTEGER},
+      </if>
+      <if test="regMajor != null">
+        reg_major = #{regMajor,jdbcType=VARCHAR},
+      </if>
+      <if test="regMajorId != null">
+        reg_major_id = #{regMajorId,jdbcType=INTEGER},
+      </if>
+      <if test="regNO != null">
+        reg_no = #{regNO,jdbcType=VARCHAR}
+      </if>
     </set>
     where id = #{id,jdbcType=INTEGER}
   </update>
@@ -278,7 +324,12 @@
       create_time = #{createTime,jdbcType=TIMESTAMP},
       update_time = #{updateTime,jdbcType=TIMESTAMP},
       status = #{status,jdbcType=INTEGER},
-      id_card2 = #{idCard2,jdbcType=VARCHAR}
+      id_card2 = #{idCard2,jdbcType=VARCHAR},
+      reg_type = #{regType,jdbcType=VARCHAR},
+      reg_type_id = #{regTypeId,jdbcType=INTEGER},
+      reg_major = #{regMajor,jdbcType=VARCHAR},
+      reg_major_id = #{regMajorId,jdbcType=INTEGER},
+      reg_no = #{regNo,jdbcType=VARCHAR}
     where id = #{id,jdbcType=INTEGER}
   </update>
   <select id="selectByExampleWithRowbounds" parameterType="com.qlmsoft.crawler.entity.CorpRegStaffExample" resultMap="BaseResultMap">

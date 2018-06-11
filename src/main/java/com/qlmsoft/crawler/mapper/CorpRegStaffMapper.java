@@ -1,10 +1,13 @@
 package com.qlmsoft.crawler.mapper;
 
-import com.qlmsoft.crawler.entity.CorpRegStaff;
-import com.qlmsoft.crawler.entity.CorpRegStaffExample;
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.session.RowBounds;
+
+import com.qlmsoft.crawler.entity.CorpRegStaff;
+import com.qlmsoft.crawler.entity.CorpRegStaffExample;
+import com.qlmsoft.crawler.mohurd.bean.RegStaffVO;
 
 public interface CorpRegStaffMapper {
     long countByExample(CorpRegStaffExample example);
@@ -30,4 +33,12 @@ public interface CorpRegStaffMapper {
     int updateByPrimaryKeySelective(CorpRegStaff record);
 
     int updateByPrimaryKey(CorpRegStaff record);
+ 
+    /**
+     * 按名字跟身份证ID缩写查找身份证ID
+     * @param record
+     * @return
+     */
+    String selectIdCardByNameAndIdcard(RegStaffVO record);
+    
 }

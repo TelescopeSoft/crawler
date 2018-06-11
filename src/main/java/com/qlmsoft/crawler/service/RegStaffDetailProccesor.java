@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.qlmsoft.crawler.entity.CorpRegStaffCert;
 import com.qlmsoft.crawler.mohurd.bean.RegStaffVO;
 
 @Service
@@ -32,10 +33,12 @@ public class RegStaffDetailProccesor {
 
 	public CloseableHttpClient closeHttpClient = HttpClients.createDefault();
 
-	public void regStaffDetailReq(String staffDetailUrl, RegStaffVO staff) {
+	public void regStaffDetailReq(RegStaffVO staff) {
+		
+		logger.info("regStaffDetailReq====" + staff.getCorpID() + ":" + staff.getName());
 
 		CloseableHttpResponse httpResponse = null;
-		HttpGet httpget = new HttpGet(JZSC_URL + staffDetailUrl);
+		HttpGet httpget = new HttpGet(JZSC_URL + staff.getStaffDetailUrl());
 
 		try {
 			httpResponse = closeHttpClient.execute(httpget);
@@ -66,7 +69,7 @@ public class RegStaffDetailProccesor {
 	}
 
 	private void regStaffDetailResult(RegStaffVO staff, String html) {
-
+		 
 		Document doc = Jsoup.parse(html);
 
 		try {
@@ -91,6 +94,13 @@ public class RegStaffDetailProccesor {
 			staff.setIdCard2(idCardStr.substring(idCardStr.lastIndexOf(SPAN)
 					+ SPAN.length()));
 
+			
+//			if(staff.getRegMajor().contains("br")){
+//				//一个证书对应有多个注册专业
+//			}else{
+//				//一个证书一个专业
+//			}
+			
 			Elements certEls = doc.select("div#regcert_tab  dl");
 			if (certEls != null) {
 				for (Element el : certEls) {
@@ -107,20 +117,25 @@ public class RegStaffDetailProccesor {
 						String regMajorStr = regMajorEl.html().substring(
 								regMajorEl.html().lastIndexOf(SPAN)
 										+ SPAN.length());
+						// 证书编号
+						Element regCertNoEl = ddEl.get(2);
+						String regCertNo = regCertNoEl.html().substring(
+								regCertNoEl.html().lastIndexOf(SPAN)
+										+ SPAN.length());
+						
 						if (regTypeStr.equals(staff.getRegType())
-								&& regMajorStr.equals(staff.getRegMajor())) {
+								&& staff.getRegMajor().contains(regMajorStr)) {
 
-							Element regCertNoEl = ddEl.get(2);
-							String regCertNo = regCertNoEl.html().substring(
-									regCertNoEl.html().lastIndexOf(SPAN)
-											+ SPAN.length());
-							staff.setCertNo(regCertNo);
+							CorpRegStaffCert cert = new CorpRegStaffCert();
+							cert.setRegType(staff.getRegType());
+							cert.setCertNo(regCertNo);
+							cert.setRegMajor(regMajorStr);
 
 							Element regNoEl = ddEl.get(3);
 							String regNoStr = regNoEl.html().substring(
 									regNoEl.html().lastIndexOf(SPAN)
 											+ SPAN.length());
-							staff.setRegNo(regNoStr);
+							cert.setRegNo(regNoStr);
 
 							Element regValidDateEl = ddEl.get(4);
 							String regValidDateStr = regValidDateEl.html()
@@ -128,32 +143,33 @@ public class RegStaffDetailProccesor {
 											regValidDateEl.html().lastIndexOf(
 													SPAN)
 													+ SPAN.length());
-							staff.setValidDate(regValidDateStr);
-
-							staff.setValid(DateUtils.parseDate(regValidDateStr,
-									"yyyy年MM月dd日"));
-
+							cert.setValidDate(DateUtils.parseDate(regValidDateStr,
+									"yyyy年MM月dd日"));;
+ 
+							staff.getCerts().add(cert);		
 							// 注册单位
 							// Element regCorp =
 							// el.getElementsByTag("dt").get(0);
-							break;
+							
 						}
 
 					} else {
 						// 没有注册专业
 						if (regTypeStr.equals(staff.getRegType())) {
-
+							CorpRegStaffCert cert = new CorpRegStaffCert();
+							cert.setRegType(staff.getRegType());
+						 
 							Element regCertNoEl = ddEl.get(1);
 							String regCertNo = regCertNoEl.html().substring(
 									regCertNoEl.html().lastIndexOf(SPAN)
 											+ SPAN.length());
-							staff.setCertNo(regCertNo);
+							cert.setCertNo(regCertNo);
 
 							Element regNoEl = ddEl.get(2);
 							String regNoStr = regNoEl.html().substring(
 									regNoEl.html().lastIndexOf(SPAN)
 											+ SPAN.length());
-							staff.setRegNo(regNoStr);
+							cert.setRegNo(regNoStr);
 
 							Element regValidDateEl = ddEl.get(3);
 							String regValidDateStr = regValidDateEl.html()
@@ -161,15 +177,14 @@ public class RegStaffDetailProccesor {
 											regValidDateEl.html().lastIndexOf(
 													SPAN)
 													+ SPAN.length());
-							staff.setValidDate(regValidDateStr);
-
-							staff.setValid(DateUtils.parseDate(regValidDateStr,
+							cert.setValidDate(DateUtils.parseDate(regValidDateStr,
 									"yyyy年MM月dd日"));
-
+ 
+							staff.getCerts().add(cert);		
 							// 注册单位
 							// Element regCorp =
 							// el.getElementsByTag("dt").get(0);
-							break;
+							
 						}
 					}
 
@@ -180,6 +195,7 @@ public class RegStaffDetailProccesor {
 			e.printStackTrace();
 			logger.error(e.getMessage());
 		}
+		 
 
 	}
 
