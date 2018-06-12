@@ -111,8 +111,8 @@ public class MohurdCorpCrawler {
 		
 		corpCertList = corpCertMappingMapper.selectAll(null);
 		
-//		List<CorpEntity> corps = corpMapper.getSurveyAndDesign();
-		List<CorpEntity> corps = corpMapper.getSurveyAndDesignStaff();
+		List<CorpEntity> corps = corpMapper.getSurveyAndDesignAdd();
+//		List<CorpEntity> corps = corpMapper.getSurveyAndDesignStaff();
 		
 		logger.info("计划获取企业数:" + corps.size());
 		long startTime = System.currentTimeMillis();
@@ -138,6 +138,40 @@ public class MohurdCorpCrawler {
 				+ (endTime - startTime) / 1000l / 60l + "分钟");
 	}
 	
+	
+	/**
+	 * 爬取企业信息程序
+	 */
+	public void startPeixun(boolean withStaffFlag) {
+
+		corpCertList = corpCertMappingMapper.selectAll(null);
+
+		List<String> corps = corpMapper.getPeixun();
+
+		logger.info("计划获取企业数:" + corps.size());
+		long startTime = System.currentTimeMillis();
+
+		total = corps.size();
+
+		for (String corp : corps) {
+			logger.info("开始获取企业:" + corp);
+
+			try {
+				start(withStaffFlag, corp);
+				// 防止被防火墙阻挡，90秒获取一次
+				Thread.sleep(30000);
+				// Thread.sleep(60000);
+			} catch (Exception e) {
+				e.printStackTrace();
+				logger.error("error : " + e.getMessage());
+			}
+		}
+
+		long endTime = System.currentTimeMillis();
+		logger.info("爬取" + success + "/" + total + " 企业，总耗时"
+				+ (endTime - startTime) / 1000l / 60l + "分钟");
+	}
+	
 	/**
 	 * 爬取企业信息程序
 	 */
@@ -150,12 +184,11 @@ public class MohurdCorpCrawler {
 
 			// 搜索企业
 			BaseCorpVO corpVO = searchCorpByNameReq(corpName);
-			
-			logger.info("企业 :" + corpVO.toString());
-
-			String zzjgdm = corpVO.getZzjgdm();
 
 			if (corpVO != null) {
+				logger.info("企业 :" + corpVO.toString());
+
+				String zzjgdm = corpVO.getZzjgdm();
 				// 企业详细页面
 				CorpDetailVO detailVO = corpDetailReq(corpVO);
 				logger.info("企业详细页面 :" + detailVO.toString());
@@ -163,6 +196,7 @@ public class MohurdCorpCrawler {
 					zzjgdm = detailVO.getZzjgdm();
 					corpVO.setCorpID(zzjgdm);
 				}
+				logger.info("zzjgdm:" + zzjgdm);
 				
 				if (detailVO != null) {
 					Qyjbxx qy = qyjbxxMapper.selectByPrimaryKey(zzjgdm);

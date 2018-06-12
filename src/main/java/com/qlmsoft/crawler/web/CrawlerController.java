@@ -72,4 +72,17 @@ public class CrawlerController {
 
 	}
 	
+	@RequestMapping("/crawler/qyzs/peixun")
+	public String peixun(String user, String password, String corpName,
+			String staff) {
+		logger.info("begin to crawl peixun");
+
+		boolean withStaffFlag = !StringUtils.isEmpty(staff);
+		if (StringUtils.isEmpty(corpName)) {
+			mohurdCorpService.startPeixun(withStaffFlag);
+		}
+		return "OK";
+
+	}
+	
 }
