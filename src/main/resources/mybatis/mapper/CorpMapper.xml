@@ -22,6 +22,12 @@
 	   WHERE (j.xgr is null or j.xgr != 'crawler') AND (j.tyshxydm IS NULL OR　LEN(j.tyshxydm) != 18)
     </select>
     
+     <select id="getCorpByZzjgdm" resultMap="BaseResultMap"  parameterType="java.lang.String" >
+       SELECT DISTINCT <include refid="columns" />
+	   FROM UEPP_Qyjbxx j
+	   WHERE j.qyID = #{qyID}
+    </select>
+    
     <select id="getSurveyAndDesign" resultMap="BaseResultMap"  >
        SELECT DISTINCT qy.qyID,qy.qymc, qy.zzjgdm,qy.yyzzzch,qy.tyshxydm,qy.xgr,qy.tag,qy.DataState
        FROM UEPP_Qyjbxx qy
@@ -34,6 +40,31 @@
        SELECT DISTINCT qy.qyID,qy.qymc, qy.zzjgdm,qy.yyzzzch,qy.tyshxydm,qy.xgr,qy.tag,qy.DataState
        FROM UEPP_Qyjbxx qy
        WHERE qy.qyID in (SELECT c.corp_id FROM Corp_Cert c where cert_type in ('设计资质','勘察资质') and  c.trade_type is null group by corp_id)
+    </select>
+
+    <select id="getCorpWithExpiredCert" resultMap="BaseResultMap"  >
+        SELECT DISTINCT qy.qyID
+        ,qy.qymc
+        ,qy.zzjgdm
+        ,qy.yyzzzch
+        ,qy.tyshxydm
+        ,qy.xgr
+        ,qy.tag
+        ,qy.DataState
+        FROM WJSJZX.dbo.UEPP_Qyjbxx qy
+        WHERE qy.qyID IN (
+        SELECT c.corp_id
+        FROM WJSJZX.dbo.Corp_Cert c
+        WHERE cert_type IN (
+        '设计资质'
+        ,'勘察资质'
+        )
+        AND (
+        valid_date &lt; GETDATE()
+        OR c.trade_type IS NULL
+        )
+        GROUP BY corp_id
+        )
     </select>
     
     <select id="getSurveyAndDesignStaff" resultMap="BaseResultMap"  >

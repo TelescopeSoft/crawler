@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.qlmsoft.crawler.entity.CorpEntity;
 import com.qlmsoft.crawler.service.CrawlerService;
 import com.qlmsoft.crawler.service.MohurdCorpCrawler;
 
@@ -52,6 +53,7 @@ public class CrawlerController {
 
 	}
 	
+
 	@RequestMapping("/crawler/qyzs/kanchasheji")
 	public String qyzsKanchasheji(String user, String password,String corpName,String staff) {
 //		if ("huangzhengyu".equals(user) && "GHadmin1234".equals(password)) {
@@ -65,11 +67,32 @@ public class CrawlerController {
 				mohurdCorpService.start(withStaffFlag,corpName);
 			}
 			
-			return "OK";
+			return "ok";
 //		} else {
 //			return "Fail";
 //		}
 
+	}
+	
+	
+	@RequestMapping("/crawler/qyzs/kanchashejiByZzjgdm")
+	public String qyzsKanchashejiByZzjgdm(String user, String password,String zzjgdm,String staff) {
+//		if ("huangzhengyu".equals(user) && "GHadmin1234".equals(password)) {
+			logger.info("begin to crawl");
+			if(StringUtils.isEmpty(zzjgdm)){
+				return "success_jsonpCallback({'msg':'组织机构代码为空'})";
+			}else {
+				boolean withStaffFlag = !StringUtils.isEmpty(staff);
+				String name = null;
+				CorpEntity corp = mohurdCorpService.getCorpByZzjgdm(zzjgdm);
+				if(corp != null){
+					name = corp.getQymc();
+				}
+				if(StringUtils.isNotEmpty(name)){
+					mohurdCorpService.start(withStaffFlag,name);
+				}
+				return "success_jsonpCallback({'msg':'ok'})";
+			}
 	}
 	
 	@RequestMapping("/crawler/qyzs/peixun")

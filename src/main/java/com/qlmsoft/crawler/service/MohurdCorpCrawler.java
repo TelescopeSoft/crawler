@@ -1,5 +1,7 @@
 package com.qlmsoft.crawler.service;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
@@ -8,6 +10,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import com.qlmsoft.crawler.mohurd.bean.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.http.Consts;
 import org.apache.http.NameValuePair;
@@ -28,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
 
 import com.qlmsoft.crawler.entity.CorpCert;
@@ -47,10 +52,6 @@ import com.qlmsoft.crawler.mapper.QyjbxxMapper;
 import com.qlmsoft.crawler.mapper.QyzsMapper;
 import com.qlmsoft.crawler.mapper.QyzzmxMapper;
 import com.qlmsoft.crawler.mapper.UeppCodeMapper;
-import com.qlmsoft.crawler.mohurd.bean.BaseCorpVO;
-import com.qlmsoft.crawler.mohurd.bean.CorpCaVO;
-import com.qlmsoft.crawler.mohurd.bean.CorpDetailVO;
-import com.qlmsoft.crawler.mohurd.bean.RegStaffs;
 
 @Service
 public class MohurdCorpCrawler {
@@ -70,6 +71,9 @@ public class MohurdCorpCrawler {
 	public static final String CERT_DATE_FORMAT = "yyyy-MM-dd";
 	
 	public CloseableHttpClient closeHttpClient = HttpClients.createDefault();
+
+	@Autowired
+	HttpConnectionManager connManager;
 
 	@Autowired
 	private CorpCertMapper certMapper;
@@ -137,8 +141,43 @@ public class MohurdCorpCrawler {
 		logger.info("爬取" + success + "/" + total + " 企业，总耗时"
 				+ (endTime - startTime) / 1000l / 60l + "分钟");
 	}
-	
-	
+
+	/**
+	 * 爬取证书过期企业信息
+	 */
+	public void crawlerCorpWithExpiredCert(boolean withStaffFlag) {
+
+		if(corpCertList == null){
+			corpCertList = corpCertMappingMapper.selectAll(null);
+		}
+
+		List<CorpEntity> corps = corpMapper.getCorpWithExpiredCert();
+
+		logger.info("计划获取企业数:" + corps.size());
+		long startTime = System.currentTimeMillis();
+
+		total = corps.size();
+
+		for (CorpEntity corp : corps) {
+			logger.info("开始获取企业:" + corp.getQymc());
+
+			try {
+				start(withStaffFlag,corp.getQymc());
+				// 防止被防火墙阻挡，90秒获取一次
+				Thread.sleep(30000);
+//				Thread.sleep(60000);
+			} catch (Exception e) {
+				e.printStackTrace();
+				logger.error("error : " + e.getMessage());
+			}
+		}
+
+		long endTime = System.currentTimeMillis();
+		logger.info("爬取" + success + "/" + total + " 企业，总耗时"
+				+ (endTime - startTime) / 1000l / 60l + "分钟");
+	}
+
+
 	/**
 	 * 爬取企业信息程序
 	 */
@@ -386,7 +425,15 @@ public class MohurdCorpCrawler {
 		if(savedCert.getCertName() != null){
 			int pos = savedCert.getCertName().trim().length();
 			if(pos > 2){
-				String level = savedCert.getCertName().trim().substring(pos - 2, pos);
+				String level = null;
+				if(savedCert.getCertName().endsWith("甲（Ⅰ）级")){
+					level = "甲（Ⅰ）级";
+				}else if(savedCert.getCertName().endsWith("甲（Ⅱ）级")){
+					level = "甲（Ⅱ）级";
+				}else {
+					level = savedCert.getCertName().trim().substring(pos - 2, pos);
+				}
+				
 				if(level.contains("级"))  {
 					savedCert.setCertLevel(level);
 				}else{
@@ -531,8 +578,11 @@ public class MohurdCorpCrawler {
 			String html = EntityUtils.toString(httpResponse.getEntity(),
 					"UTF-8");
 
+//			File file = new File("E:\\2017\\codes\\qlmsoft\\crawler2\\crawler\\data_sample\\pageCert.html");
+//			String html =  FileUtils.readFileToString(file);
+
 			if (html != null) {
-				result = corpCaListResult(html);
+				result = corpCaListResult(corpVO.getCorpPageID(), html);
 			}
 
 		} catch (UnsupportedEncodingException e) {
@@ -556,25 +606,37 @@ public class MohurdCorpCrawler {
 
 	}
 
-	private List<CorpCaVO> corpCaListResult(String html) {
+	private List<CorpCaVO> corpCaListResult(String corpPageId, String html) {
 
 		List<CorpCaVO> result = new ArrayList<CorpCaVO>();
 		Document doc = Jsoup.parse(html);
+//		logger.info(html);
 
 		try {
-			Elements caTrs = doc.select("#catabled tr.row");
+			int pagingFormSize  = doc.select("form.pagingform").size();
+//			logger.info("pagingFormSize : " + pagingFormSize);
+			if(pagingFormSize > 0){
+				//has paging
+//				Element lastPageEl = doc.select("div.quotes a.nxt").first();
+//				int totalPage = Integer.parseInt(lastPageEl.attr("dt"));
+//				logger.info("totalPage : " + totalPage);
 
-			for (Element caTr : caTrs) {
-				CorpCaVO ca = new CorpCaVO();
-				Elements tds = caTr.getElementsByTag("td");
+				//处理第一页
+				abstractCertSinglePage(result, doc);
 
-				ca.setCsywlx(tds.get(1).html());
-				ca.setZsbh(tds.get(2).html());
-				ca.setZzmc(tds.get(3).html());
-				ca.setFzrq(tds.get(4).html());
-				ca.setZsyxzrq(tds.get(5).html());
-				ca.setFzdw(tds.get(6).html());
-				result.add(ca);
+				Thread.sleep(10000);
+
+				String pageUrl = CORP_CA_LIST_URL + corpPageId + "?$pg=2&_=" + System.currentTimeMillis();
+				logger.info("begin to crawler 2 page:" + pageUrl) ;
+				List<CorpCaVO> certInPage = certReqBySinglePage(pageUrl);
+				logger.info(" certInPage size : " + certInPage.size()) ;
+				if (certInPage != null && !certInPage.isEmpty()) {
+					result.addAll(certInPage);
+				}
+
+
+			}else {
+				abstractCertSinglePage(result, doc);
 			}
 
 		} catch (Exception e) {
@@ -582,6 +644,8 @@ public class MohurdCorpCrawler {
 			logger.error(e.getMessage());
 		}
 
+
+		logger.info("------------size------" + result.size());
 		if (result.isEmpty()) {
 			logger.info("no result");
 
@@ -593,6 +657,59 @@ public class MohurdCorpCrawler {
 
 		return result;
 
+	}
+
+
+	private List<CorpCaVO> certReqBySinglePage(String singlePageUrl) {
+		List<CorpCaVO> result = new ArrayList<CorpCaVO>();
+
+		CloseableHttpResponse httpResponse = null;
+		HttpGet httpget = new HttpGet(singlePageUrl);
+		try {
+			CloseableHttpClient httpClient = connManager.getHttpClient();
+			httpResponse = httpClient.execute(httpget);
+			String html = EntityUtils.toString(httpResponse.getEntity(),
+					"UTF-8");
+			if (html != null && !StringUtils.isEmpty(html)) {
+				Document doc = Jsoup.parse(html);
+				abstractCertSinglePage(result, doc);
+			}
+
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (ClientProtocolException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (httpResponse != null) {
+				try {
+					httpResponse.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+		}
+
+		return result;
+
+	}
+
+	private void abstractCertSinglePage(List<CorpCaVO> result, Document doc) {
+		Elements caTrs = doc.select("#catabled tr.row");
+		for (Element caTr : caTrs) {
+            CorpCaVO ca = new CorpCaVO();
+            Elements tds = caTr.getElementsByTag("td");
+
+            ca.setCsywlx(tds.get(1).html());
+            ca.setZsbh(tds.get(2).html());
+            ca.setZzmc(tds.get(3).html());
+            ca.setFzrq(tds.get(4).html());
+            ca.setZsyxzrq(tds.get(5).html());
+            ca.setFzdw(tds.get(6).html());
+            result.add(ca);
+        }
 	}
 
 	/**
@@ -804,6 +921,10 @@ public class MohurdCorpCrawler {
 		String zzjgdm = corpCreditCode.substring(8, 16) + "-"
 				+ corpCreditCode.substring(16, 17);
 		return qyID.equals(zzjgdm);
+	}
+	
+	public CorpEntity getCorpByZzjgdm(String qyID){
+		return corpMapper.getCorpByZzjgdm(qyID);
 	}
 
 }
